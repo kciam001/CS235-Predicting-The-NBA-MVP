@@ -45,6 +45,9 @@ def Get_Player_Stats(player, season):
     per_game = soup.find(attrs={'id': 'all_per_game'})
     for row in per_game.findAll("tr"):
         if 'id' in row.attrs and row.attrs['id'] == "per_game." + season:
+            stats['fga'] = float(row.find('td', attrs={'data-stat': 'fga_per_g'}).text)
+            stats['fg3a'] = float(row.find('td', attrs={'data-stat': 'fg3a_per_g'}).text)
+            stats['fta'] = float(row.find('td', attrs={'data-stat': 'fta_per_g'}).text)
             stats['g'] = float(row.find('td', attrs={'data-stat': 'g'}).text)
             stats['mp_per_g'] = float(row.find('td', attrs={'data-stat': 'mp_per_g'}).text)
             stats['pts_per_g'] = float(row.find('td', attrs={'data-stat': 'pts_per_g'}).text)
@@ -64,7 +67,12 @@ def Get_Player_Stats(player, season):
             rows = other_soup.findAll("tr")
     for row in rows:
         if 'id' in row.attrs and row.attrs['id'] == "advanced." + season:
-            stats['ws'] = float(row.find('td', attrs={'data-stat': 'ws'}).text)    
+            stats['ws'] = float(row.find('td', attrs={'data-stat': 'ws'}).text)
+            stats['ws_per_48'] = float(row.find('td', attrs={'data-stat': 'ws_per_48'}).text)
+            stats['per'] = float(row.find('td', attrs={'data-stat': 'per'}).text)
+            stats['ts_pct'] = float(row.find('td', attrs={'data-stat': 'ts_pct'}).text)
+            stats['usg_pct'] = float(row.find('td', attrs={'data-stat': 'usg_pct'}).text)
+            stats['bpm'] = float(row.find('td', attrs={'data-stat': 'bpm'}).text)     
     return stats
 
 def Strip_Accents(text):
