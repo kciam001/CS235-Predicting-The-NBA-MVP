@@ -5,13 +5,14 @@ import numpy as np
 import requests
 from bs4 import BeautifulSoup
 import csv
+import unicodedata
 
 #gets CURRENT stats for given player
 def Get_Player_Stats(player, season):
 
     #find url of player profile
-    lastName = player[player.find(' ')+1:]
-    letter = lastName[0].lower()
+    last_name = player[player.find(' ')+1:]
+    letter = last_name[0].lower()
     url = "https://www.basketball-reference.com/players/" + letter
     res = requests.get(url)
     soup = BeautifulSoup(res.text, features="html5lib")
@@ -25,7 +26,9 @@ def Get_Player_Stats(player, season):
         head = row.find('th')
         name = head.find('a')
         if(name is not None):
-            if(name.contents[0].lower() == player.lower()):
+            #removes accents (looking at you Nikola Jokić)
+            website_name = Strip_Accents(name.contents[0].lower())
+            if(website_name == player.lower()):
                 profile = name['href']
     if(profile == " "):
         print("Player not found.")
@@ -71,6 +74,19 @@ def Get_Player_Stats(player, season):
             stats['usg_pct'] = float(row.find('td', attrs={'data-stat': 'usg_pct'}).text)
             stats['bpm'] = float(row.find('td', attrs={'data-stat': 'bpm'}).text)     
     return stats
+
+def Strip_Accents(text):
+    try:
+        text = unicode(text, 'utf-8')
+    except NameError:
+        pass
+
+    text = unicodedata.normalize('NFD', text)\
+            .encode('ascii', 'ignore')\
+            .decode("utf-8")
+    return str(text)
+
+
 
 print("Enter player full name (e.g. James Harden): ")
 player = input()
