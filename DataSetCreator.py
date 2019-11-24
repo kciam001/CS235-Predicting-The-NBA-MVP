@@ -23,13 +23,21 @@ def ProcessCSV(file):
     return features, data  
 
 class NBADataset(Dataset):
-    def __init__(self, csvFile): 
+    def __init__(self, csvFile, featureNames): 
         features, data = ProcessCSV(csvFile)
-        #get the award share column. This is our label
-        idx = np.where(features=='award_share')
+        #get index for our label
+        idx = np.where(features == featureNames['label'])
+        #get corresponding column
         self.awdShare = data[:,idx]
-        #delete this from the dataset
-        self.data = np.delete(data,idx,axis=1)
+
+        #create empty array to hold features we care about
+        self.data = np.zeros(shape=(self.awdShare.shape[0],1))
+        #extract feature columns
+        for name in featureNames['features']:
+            index = np.where(features == name)
+            self.data = np.append(self.data, data[:,index].reshape(-1,1), axis=1)
+        #delete 0 column
+        self.data = np.delete(self.data,0,axis=1)
     
     def __len__(self):
         return len(self.data)

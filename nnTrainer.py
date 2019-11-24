@@ -28,14 +28,15 @@ def main():
 
     EPOCH = 100
     BATCH_SIZE = 2
+    dataInfo = {'features':['fga','fg3a'], 'label':'award_share'}
 
-    train = NBADataset('dummyData.csv')
+    train = NBADataset('dummyData.csv', dataInfo)
     trainDataset = DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
 
-    test = NBADataset('dummyData.csv')
-    testDataset = DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
+    test = NBADataset('dummyData.csv', dataInfo)
+    testDataset = DataLoader(test, batch_size=BATCH_SIZE, shuffle=True)
 
-    numFeatures = len(train[0][0])
+    numFeatures = len(dataInfo['features'])
     net = Net(numFeatures=numFeatures)
 
     #optimzer function
@@ -61,7 +62,7 @@ def main():
                     if abs(i - labels[idx]) < .1 :
                         correct +=1
                     total += 1
-        print("Accuracy: {}".format(round(correct/total),3))      
+        print("Accuracy: {}".format(round(correct/total,3)))      
 
 
 if __name__ == '__main__':
