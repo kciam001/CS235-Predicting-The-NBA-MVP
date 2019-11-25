@@ -26,7 +26,7 @@ class Net(nn.Module):
 
 def main():
 
-    EPOCH = 100
+    EPOCH = 10000
     BATCH_SIZE = 20
     dataInfo = {
         'features':['g', 'mp_per_g', 'pts_per_g', 'trb_per_g', 'ast_per_g', 'stl_per_g', 'blk_per_g', 'fg_pct', 'fg3_pct', 'ft_pct', 'ws', 'votes_first', 'points_won', 'points_max']
@@ -39,13 +39,13 @@ def main():
     net = Net(numFeatures=numFeatures)
 
     #optimzer function
-    optimizer = optim.SGD(net.parameters(), lr=.001)
+    optimizer = optim.SGD(net.parameters(), lr=.01)
     #loss function
     lossFunction = nn.MSELoss(reduction='sum')
     
     for epoch in range(EPOCH):
         for batch, labels in trainDataset:
-            labels = labels.view(BATCH_SIZE,1)
+            labels = labels.view(-1,1)
             net.zero_grad()
             output = net(batch)
             loss = lossFunction(output, labels.float())
