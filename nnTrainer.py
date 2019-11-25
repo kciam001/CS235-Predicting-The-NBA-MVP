@@ -27,14 +27,13 @@ class Net(nn.Module):
 def main():
 
     EPOCH = 100
-    BATCH_SIZE = 2
-    dataInfo = {'features':['fga','fg3a'], 'label':'award_share'}
+    BATCH_SIZE = 20
+    dataInfo = {
+        'features':['g', 'mp_per_g', 'pts_per_g', 'trb_per_g', 'ast_per_g', 'stl_per_g', 'blk_per_g', 'fg_pct', 'fg3_pct', 'ft_pct', 'ws', 'votes_first', 'points_won', 'points_max']
+        , 'label':'award_share'}
 
-    train = NBADataset('dummyData.csv', dataInfo)
+    train = NBADataset('data/train_data(feature reduced).csv', dataInfo)
     trainDataset = DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
-
-    test = NBADataset('dummyData.csv', dataInfo)
-    testDataset = DataLoader(test, batch_size=BATCH_SIZE, shuffle=True)
 
     numFeatures = len(dataInfo['features'])
     net = Net(numFeatures=numFeatures)
@@ -52,17 +51,7 @@ def main():
             loss = lossFunction(output, labels.float())
             loss.backward()
             optimizer.step()
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for batch, labels in testDataset:
-                labels = labels.view(BATCH_SIZE,1)
-                output = net(batch) 
-                for idx, i in enumerate(output):
-                    if abs(i - labels[idx]) < .1 :
-                        correct +=1
-                    total += 1
-        print("Accuracy: {}".format(round(correct/total,3)))      
+        print(loss)
 
 
 if __name__ == '__main__':
