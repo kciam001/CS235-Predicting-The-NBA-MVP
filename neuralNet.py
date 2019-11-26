@@ -26,12 +26,10 @@ class Net(nn.Module):
         return output
 
 def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path, show):
-
     #optimzer function
     optimizer = optim.SGD(model.parameters(), lr=.001)
     #loss function
     lossFunction = nn.MSELoss()
-
     losses = []
     #training loop
     for e in range(epoch):
@@ -47,7 +45,6 @@ def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path, show):
             loss = lossFunction(output, labels.float())
             loss.backward()
             optimizer.step()
-            #get statistics 
             running_loss += loss.item()
 
         #calculate the values
@@ -61,19 +58,16 @@ def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path, show):
             #validate the model on validationSet
             with torch.no_grad():
                 for i, data in enumerate(validDataSet):
-                    #get the batch + labels
                     batch,labels = data
                     labels = labels.view(-1,1)
                     output = model(batch)
                     for index, val in enumerate(output):
-                        if ( abs(val - labels[index])) < .2:
+                        if (abs(val - labels[index])) < .2:
                             correct +=1
                         total +=1 
             print("epoch {0}: loss: {1}, accuracy: {2} ".format(e,round(epoch_loss,5),round(correct/total, 5)))
 
-
     #torch.save(model.state_dict(),path)
-
     if show:
         plt.plot(np.array(losses), 'r')
         plt.show()
