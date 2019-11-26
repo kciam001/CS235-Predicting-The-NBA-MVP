@@ -25,7 +25,7 @@ class Net(nn.Module):
         output = self.output(input)
         return output
 
-def train(model, epoch, batchSize, dataInfo, dataSet, path):
+def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path):
 
     #optimzer function
     optimizer = optim.SGD(model.parameters(), lr=.001)
@@ -33,6 +33,7 @@ def train(model, epoch, batchSize, dataInfo, dataSet, path):
     lossFunction = nn.MSELoss(reduction='sum')
 
     losses = []
+    #training loop
     for e in range(epoch):
         running_loss = 0.0
         for i, data in enumerate(dataSet):
@@ -48,12 +49,28 @@ def train(model, epoch, batchSize, dataInfo, dataSet, path):
             optimizer.step()
             #get statistics 
             running_loss += loss.item()
+
+        #calculate the values
         epoch_loss = running_loss / len(dataSet)
         losses.append(epoch_loss)
-        if e % 1000 == 0:
-            print("epoch {0}: loss: {1} ".format(e,round(epoch_loss,5)))
+        if e % 1000 ==  999:
+            #evaluate
+            correct = 0
+            total = 0
+            #validate the model on validationSet
+            with torch.no_grad():
+                for i, data in enumerate(validDataSet):
+                    #get the batch + labels
+                    batch,labels = data
+                    labels = labels.view(-1,1)
+                    output = model(batch)
+                    for index, val in enumerate(output):
+                        if ( abs(val - labels[index])) < .2:
+                            correct +=1
+                        total +=1 
+            print("epoch {0}: loss: {1}, accuracy: {2} ".format(e,round(epoch_loss,5),round(correct/total, 5)))
 
-    torch.save(model.state_dict(),path)
+    #torch.save(model.state_dict(),path)
 
     plt.plot(np.array(losses), 'r')
     plt.show()
@@ -70,11 +87,10 @@ def SplitDataSet(dataset, split):
 
 def main():
     #Training variables
-    EPOCH = 1000
+    EPOCH = 10000
     BATCH_SIZE = 40
     #Validation split variable
     VALIDATION_SPLIT = .2
-    SHUFFLE = True
 
     #parser
     parser = argparse.ArgumentParser(description='Train or evaluate a model')
@@ -90,13 +106,10 @@ def main():
 
     #load the training dataset
     trainDataset = NBADataset('data/train_data(feature reduced).csv', dataInfo)
-
     #split the data
     trainSet, validSet = SplitDataSet(trainDataset,VALIDATION_SPLIT)
-    
     #create training Dataloader
     trainDataLoader = DataLoader(trainSet, batch_size=BATCH_SIZE, shuffle=True)
-
     #create the validation Dataloader
     validDataLoader = DataLoader(validSet, batch_size=BATCH_SIZE, shuffle=True)
 
@@ -108,7 +121,7 @@ def main():
 
     #train the model
     if args.train:
-        train(net, EPOCH, BATCH_SIZE, dataInfo, trainDataLoader, PATH)
+        train(net, EPOCH, BATCH_SIZE, dataInfo, trainDataLoader, validDataLoader, PATH)
 
     #eval the model
     elif args.eval:
