@@ -25,12 +25,12 @@ class Net(nn.Module):
         output = self.output(input)
         return output
 
-def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path):
+def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path, show):
 
     #optimzer function
     optimizer = optim.SGD(model.parameters(), lr=.001)
     #loss function
-    lossFunction = nn.MSELoss(reduction='sum')
+    lossFunction = nn.MSELoss()
 
     losses = []
     #training loop
@@ -53,6 +53,7 @@ def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path):
         #calculate the values
         epoch_loss = running_loss / len(dataSet)
         losses.append(epoch_loss)
+        #eval model and print statistics
         if e % 1000 ==  999:
             #evaluate
             correct = 0
@@ -70,10 +71,12 @@ def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path):
                         total +=1 
             print("epoch {0}: loss: {1}, accuracy: {2} ".format(e,round(epoch_loss,5),round(correct/total, 5)))
 
+
     #torch.save(model.state_dict(),path)
 
-    plt.plot(np.array(losses), 'r')
-    plt.show()
+    if show:
+        plt.plot(np.array(losses), 'r')
+        plt.show()
 
 def loadModel(model, path):
     model.load_state_dict(torch.load(path))
@@ -96,6 +99,7 @@ def main():
     parser = argparse.ArgumentParser(description='Train or evaluate a model')
     parser.add_argument('--train', action='store_true')
     parser.add_argument('--eval', action='store_true')
+    parser.add_argument('--show', action='store_true')
     args = parser.parse_args()
 
     #features and label information
@@ -121,7 +125,7 @@ def main():
 
     #train the model
     if args.train:
-        train(net, EPOCH, BATCH_SIZE, dataInfo, trainDataLoader, validDataLoader, PATH)
+        train(net, EPOCH, BATCH_SIZE, dataInfo, trainDataLoader, validDataLoader, PATH, args.show)
 
     #eval the model
     elif args.eval:
