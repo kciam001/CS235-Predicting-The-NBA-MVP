@@ -1,11 +1,8 @@
-import csv
 import numpy as np
-import pickle as pikl
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F 
 import torch.optim as optim
-from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import Dataset, DataLoader
 from DataSetCreator import NBADataset, SplitDataSet
 from matplotlib import pyplot as plt
@@ -41,7 +38,8 @@ def evaluate(model, validDataSet):
                 total +=1 
     return float(correct)/total
 
-def train(model, numEpochs, dataSet, validDataSet, path, showPlot, saveModel):
+def train(numFeatures, numEpochs, dataSet, validDataSet, path, showPlot, saveModel):
+    model = Net(numFeatures)
     checkpoint = 50
     #learning rate
     learningRate = 0.001
@@ -105,28 +103,26 @@ def main():
         , 'label':'award_share'}
     numFeatures = len(dataInfo['features']) 
 
-    #load the training dataset
-    trainDataset = NBADataset('data/train_data(feature reduced).csv', dataInfo)
-    #split the data
-    trainSet, validSet = SplitDataSet(trainDataset,VALIDATION_SPLIT)
-    #create training Dataloader
-    trainDataLoader = DataLoader(trainSet, batch_size=BATCH_SIZE)
-    #create the validation Dataloader
-    validDataLoader = DataLoader(validSet, batch_size=BATCH_SIZE)
-
     #PATH to save or load weights 
     PATH = './NBA_net.pth'
 
     #train the model
     if args.train:
-        #create the model
-        net = Net(numFeatures)
-        train(net, EPOCH, trainDataLoader, validDataLoader, PATH, args.plot, args.save)
+        #load the training dataset
+        trainDataset = NBADataset('../data/train_data(feature reduced).csv', dataInfo)
+        #split the data
+        trainSet, validSet = SplitDataSet(trainDataset,VALIDATION_SPLIT)
+        #create training Dataloader
+        trainDataLoader = DataLoader(trainSet, batch_size=BATCH_SIZE)
+        #create the validation Dataloader
+        validDataLoader = DataLoader(validSet, batch_size=BATCH_SIZE)
+        #create a model
+        train(numFeatures, EPOCH, trainDataLoader, validDataLoader, PATH, args.plot, args.save)
 
     #eval the model
     elif args.eval:
         net = loadModel(numFeatures,PATH)
-        evalData = NBADataset('data/TestData.csv', dataInfo)
+        evalData = NBADataset('../data/TestData.csv', dataInfo)
         evalDataLoader = DataLoader(evalData, batch_size=1)
         for i, data in enumerate(evalDataLoader):
             batch, _ = data
