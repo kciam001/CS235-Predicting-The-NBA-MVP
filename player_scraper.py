@@ -45,7 +45,6 @@ def Get_Player_Stats(player, season):
     per_game = soup.find(attrs={'id': 'all_per_game'})
     for row in per_game.findAll("tr"):
         if 'id' in row.attrs and row.attrs['id'] == "per_game." + season:
-            stats['g'] = float(row.find('td', attrs={'data-stat': 'g'}).text)
             stats['mp_per_g'] = float(row.find('td', attrs={'data-stat': 'mp_per_g'}).text)
             stats['pts_per_g'] = float(row.find('td', attrs={'data-stat': 'pts_per_g'}).text)
             stats['trb_per_g'] = float(row.find('td', attrs={'data-stat': 'trb_per_g'}).text)
