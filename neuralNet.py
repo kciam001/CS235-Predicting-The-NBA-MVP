@@ -42,7 +42,7 @@ def evaluate(model, validDataSet):
     return float(correct)/total
 
 def train(model, numEpochs, dataSet, validDataSet, path, showPlot, saveModel):
-    checkpoint = 100
+    checkpoint = 50
     #learning rate
     learningRate = 0.001
     #optimzer + loss function
@@ -54,8 +54,6 @@ def train(model, numEpochs, dataSet, validDataSet, path, showPlot, saveModel):
     for epoch in range(numEpochs):
         runningLoss = 0.0
         for i, data in enumerate(dataSet):
-            print(data)
-            quit()
             #get the batch + labels
             batch,labels = data
             labels = labels.view(-1,1)
@@ -71,7 +69,8 @@ def train(model, numEpochs, dataSet, validDataSet, path, showPlot, saveModel):
         epochLoss = runningLoss / len(dataSet)
         losses.append(epochLoss)
         if epoch % checkpoint == checkpoint - 1:
-            print("Epoch {0}: Loss: {1:.5f}".format(epoch+1,epochLoss) )
+            accuracy = evaluate(model, validDataSet)
+            print("Epoch {0}, Loss: {1:.5f}, {2:.5f}".format(epoch+1,epochLoss,accuracy) )
     
     if saveModel:
         torch.save(model.state_dict(),path)
@@ -88,7 +87,7 @@ def loadModel(numFeatures,path):
 def main():
     #Training variables
     EPOCH = 1000
-    BATCH_SIZE = 1
+    BATCH_SIZE = 50
     #Validation split variable
     VALIDATION_SPLIT = .2
 
