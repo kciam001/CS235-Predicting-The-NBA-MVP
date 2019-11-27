@@ -11,18 +11,19 @@ def ProcessCSV(file):
     for row in myreader:
         results.append(row)
     #the features are the first row of the csv file
-    features = np.array(results[0])
+    features = np.array([s.lower() for s in results[0]])
     data = np.array(results[1:])
     return features, data  
 
 class NBADataset(Dataset):
     def __init__(self, csvFile, featureNames): 
         features, data = ProcessCSV(csvFile)
-
         #get index for our label
         idx = np.where(features == featureNames['label'])
+        idx2 = np.where(features == 'player')
         #get corresponding column
         self.awdShare = data[:,idx].astype(float)
+        self.playerNames = data[:,idx2]
 
         #create empty array to hold features we care about
         self.data = np.zeros(shape=(self.awdShare.shape[0],1))
@@ -40,6 +41,9 @@ class NBADataset(Dataset):
         sample = self.data[idx,:]
         label = self.awdShare[idx]
         return torch.Tensor(sample), label
+    
+    def getPlayerName(self,idx):
+        return self.playerNames[idx].item()
 
 def SplitDataSet(dataset, split):
     testSize = int(split * len(dataset))

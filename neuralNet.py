@@ -11,7 +11,6 @@ from DataSetCreator import NBADataset, SplitDataSet
 from matplotlib import pyplot as plt
 import argparse
 
-
 class Net(nn.Module):
     def __init__(self, numFeatures):
         super().__init__()
@@ -27,7 +26,23 @@ class Net(nn.Module):
         output = self.output(input)
         return output
 
-def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path, show, save):
+def evaluate(model, validDataSet):
+    correct = 0
+    total = 0
+    #validate the model on validationSet
+    with torch.no_grad():
+        for i, data in enumerate(validDataSet):
+            batch,labels = data
+            labels = labels.view(-1,1)
+            output = model(batch)
+            for index, val in enumerate(output):
+                if (abs(val - labels[index])) < .15:
+                    correct +=1
+                total +=1 
+    return float(correct)/total
+
+def train(model, numEpochs, dataSet, validDataSet, path, showPlot, saveModel):
+    checkpoint = 100
     #learning rate
     learningRate = 0.001
     #optimzer + loss function
@@ -36,9 +51,11 @@ def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path, show, 
     losses = []
 
     #training loop
-    for e in range(epoch):
-        running_loss = 0.0
+    for epoch in range(numEpochs):
+        runningLoss = 0.0
         for i, data in enumerate(dataSet):
+            print(data)
+            quit()
             #get the batch + labels
             batch,labels = data
             labels = labels.view(-1,1)
@@ -49,41 +66,29 @@ def train(model, epoch, batchSize, dataInfo, dataSet, validDataSet, path, show, 
             loss = torch.sqrt(lossFunction(output, labels.float()))
             loss.backward()
             optimizer.step()
-            running_loss += loss.item()
+            runningLoss += loss.item()
         #calculate the values
-        epoch_loss = running_loss / len(dataSet)
-        losses.append(epoch_loss)
-        #eval model and print statistics
-        if e % 1000 ==  999:
-            correct = 0
-            total = 0
-            #validate the model on validationSet
-            with torch.no_grad():
-                for i, data in enumerate(validDataSet):
-                    batch,labels = data
-                    labels = labels.view(-1,1)
-                    output = model(batch)
-                    for index, val in enumerate(output):
-                        if (abs(val - labels[index])) < .15:
-                            correct +=1
-                        total +=1 
-            print("epoch {0}: loss: {1}, accuracy: {2} ".format(e+1,round(epoch_loss,5),round(correct/total, 5)))
+        epochLoss = runningLoss / len(dataSet)
+        losses.append(epochLoss)
+        if epoch % checkpoint == checkpoint - 1:
+            print("Epoch {0}: Loss: {1:.5f}".format(epoch+1,epochLoss) )
     
-    if save:
+    if saveModel:
         torch.save(model.state_dict(),path)
-    if show:
+    if showPlot:
         plt.plot(np.array(losses), 'r')
         plt.show()
 
-def loadModel(model, path):
+def loadModel(numFeatures,path):
+    model = Net(numFeatures)
     model.load_state_dict(torch.load(path))
     model.eval()
     return model
 
 def main():
     #Training variables
-    EPOCH = 10000
-    BATCH_SIZE = 50
+    EPOCH = 1000
+    BATCH_SIZE = 1
     #Validation split variable
     VALIDATION_SPLIT = .2
 
@@ -110,19 +115,26 @@ def main():
     #create the validation Dataloader
     validDataLoader = DataLoader(validSet, batch_size=BATCH_SIZE)
 
-    #create the model
-    net = Net(numFeatures=numFeatures)
-
     #PATH to save or load weights 
     PATH = './NBA_net.pth'
 
     #train the model
     if args.train:
-        train(net, EPOCH, BATCH_SIZE, dataInfo, trainDataLoader, validDataLoader, PATH, args.plot, args.save)
+        #create the model
+        net = Net(numFeatures)
+        train(net, EPOCH, trainDataLoader, validDataLoader, PATH, args.plot, args.save)
 
     #eval the model
     elif args.eval:
-        net = loadModel(net,PATH)
+        net = loadModel(numFeatures,PATH)
+        evalData = NBADataset('data/TestData.csv', dataInfo)
+        evalDataLoader = DataLoader(evalData, batch_size=1)
+        for i, data in enumerate(evalDataLoader):
+            batch, _ = data
+            output = net(batch)
+            print("Player: {0} - {1:4f}".format(evalData.getPlayerName(i), output.item() ))
+
+
 
 
 if __name__ == '__main__':
