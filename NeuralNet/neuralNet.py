@@ -91,10 +91,12 @@ def main():
 
     #parser
     parser = argparse.ArgumentParser(description='Train or evaluate a model')
-    parser.add_argument('--train', action='store_true')
-    parser.add_argument('--eval', action='store_true')
-    parser.add_argument('--plot', action='store_true')
-    parser.add_argument('--save', action='store_true')
+    parser.add_argument('--train', action='store_true', help="training mode")
+    parser.add_argument('--eval', action='store_true', help="evaluation mode")
+    parser.add_argument('--plot', action='store_true', help="plot metrics after training model")
+    parser.add_argument('--save', action='store_true', help="save the model weights after training")
+    parser.add_argument('-w','--weightsPath', help="path that will save/load weights")
+    parser.add_argument('-d', '--dataPath',required=True,help="name of csv file(minus .csv) that will be loaded. Must be located in ./Data folder")
     args = parser.parse_args()
 
     #features and label information
@@ -103,13 +105,20 @@ def main():
         , 'label':'award_share'}
     numFeatures = len(dataInfo['features']) 
 
+    WEIGHTS_PATH = None
     #PATH to save or load weights 
-    PATH = './NBA_net.pth'
+    if args.weightsPath:
+        WEIGHTS_PATH = args.weightsPath
+    else:
+        WEIGHTS_PATH = './NBA_net.pth'
+
+    #dataset to be loaded    
+    dataPath = "../Data/" + args.dataPath + '.csv'
 
     #train the model
     if args.train:
         #load the training dataset
-        trainDataset = NBADataset('../data/train_data(feature reduced).csv', dataInfo)
+        trainDataset = NBADataset(dataPath, dataInfo)
         #split the data
         trainSet, validSet = SplitDataSet(trainDataset,VALIDATION_SPLIT)
         #create training Dataloader
@@ -117,20 +126,18 @@ def main():
         #create the validation Dataloader
         validDataLoader = DataLoader(validSet, batch_size=BATCH_SIZE)
         #create a model
-        train(numFeatures, EPOCH, trainDataLoader, validDataLoader, PATH, args.plot, args.save)
+        train(numFeatures, EPOCH, trainDataLoader, validDataLoader, WEIGHTS_PATH, args.plot, args.save)
 
     #eval the model
     elif args.eval:
-        net = loadModel(numFeatures,PATH)
-        evalData = NBADataset('../data/TestData.csv', dataInfo)
-        evalDataLoader = DataLoader(evalData, batch_size=1)
-        for i, data in enumerate(evalDataLoader):
+        net = loadModel(numFeatures,WEIGHTS_PATH)
+        #load in the examples
+        evalData = NBADataset(dataPath, dataInfo)
+        #predict output for each example
+        for i, data in enumerate(evalData):
             batch, _ = data
             output = net(batch)
             print("Player: {0} - {1:4f}".format(evalData.getPlayerName(i), output.item() ))
-
-
-
 
 if __name__ == '__main__':
     main()
