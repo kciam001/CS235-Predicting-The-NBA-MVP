@@ -1,7 +1,7 @@
 import csv
 import numpy as np
 import torch 
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, random_split
 
 def ProcessCSV(file):
     results = []
@@ -40,3 +40,8 @@ class NBADataset(Dataset):
         sample = self.data[idx,:]
         label = self.awdShare[idx]
         return torch.Tensor(sample), label
+
+def SplitDataSet(dataset, split):
+    testSize = int(split * len(dataset))
+    trainSize = len(dataset) - testSize
+    return random_split(dataset, [trainSize, testSize])
