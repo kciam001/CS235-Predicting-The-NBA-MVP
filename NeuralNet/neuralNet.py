@@ -33,7 +33,7 @@ def evaluate(model, validDataSet):
             labels = labels.view(-1,1)
             output = model(batch)
             for index, val in enumerate(output):
-                if (abs(val - labels[index])) < .15:
+                if (abs(val - labels[index])) < .1:
                     correct +=1
                 total +=1 
     return float(correct)/total
@@ -47,7 +47,7 @@ def train(numFeatures, numEpochs, dataSet, validDataSet, path, showPlot, saveMod
     optimizer = optim.SGD(model.parameters(), lr=learningRate)
     lossFunction = nn.MSELoss(reduction='sum')
     losses = []
-
+    accuracies = []
     #training loop
     for epoch in range(numEpochs):
         runningLoss = 0.0
@@ -68,12 +68,19 @@ def train(numFeatures, numEpochs, dataSet, validDataSet, path, showPlot, saveMod
         losses.append(epochLoss)
         if epoch % checkpoint == checkpoint - 1:
             accuracy = evaluate(model, validDataSet)
-            print("Epoch {0}, Loss: {1:.5f}, {2:.5f}".format(epoch+1,epochLoss,accuracy) )
+            accuracies.append(accuracy)
+            print("Epoch {0}, Loss: {1:.5f}, Accuracy: {2:.5f}".format(epoch+1,epochLoss,accuracy) )
     
     if saveModel:
         torch.save(model.state_dict(),path)
     if showPlot:
-        plt.plot(np.array(losses), 'r')
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        ax1.plot(np.array(losses), 'r')
+        ax1.set(xlabel='Epoch')
+        ax1.set_title('Loss')
+        ax2.plot(np.array(accuracies), 'g')   
+        ax2.set_title('Accuracy') 
+        ax2.set(xlabel='Checkpoint')   
         plt.show()
 
 def loadModel(numFeatures,path):
@@ -84,7 +91,7 @@ def loadModel(numFeatures,path):
 
 def main():
     #Training variables
-    EPOCH = 1000
+    EPOCH = 5000
     BATCH_SIZE = 50
     #Validation split variable
     VALIDATION_SPLIT = .2
@@ -137,7 +144,7 @@ def main():
         for i, data in enumerate(evalData):
             batch, _ = data
             output = net(batch)
-            print("Player: {0} - {1:4f}".format(evalData.getPlayerName(i), output.item() ))
+            print("Player: {0} - {1:4f}".format(evalData.getPlayerName(i), output.item()))
 
 if __name__ == '__main__':
     main()
