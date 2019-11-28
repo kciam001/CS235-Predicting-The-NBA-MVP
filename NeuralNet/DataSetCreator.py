@@ -23,6 +23,7 @@ class NBADataset(Dataset):
         idx2 = np.where(features == 'player')
         #get corresponding column
         self.awdShare = data[:,idx].astype(float)
+        #store playName information if possible
         self.playerNames = data[:,idx2]
 
         #create empty array to hold features we care about
@@ -30,7 +31,8 @@ class NBADataset(Dataset):
         #extract feature columns
         for name in featureNames['features']:
             index = np.where(features == name)
-            self.data = np.append(self.data, data[:,index].astype(float).reshape(-1,1), axis=1)
+            if index[0].size > 0:
+                self.data = np.append(self.data, data[:,index].astype(float).reshape(-1,1), axis=1)
         #delete 0 column
         self.data = np.delete(self.data,0,axis=1)
 
@@ -43,9 +45,16 @@ class NBADataset(Dataset):
         return torch.Tensor(sample), label
     
     def getPlayerName(self,idx):
-        return self.playerNames[idx].item()
+        if self.playerNames.size > 0:
+            return self.playerNames[idx].item()
+        else:
+            return None
 
 def SplitDataSet(dataset, split):
     testSize = int(split * len(dataset))
     trainSize = len(dataset) - testSize
     return random_split(dataset, [trainSize, testSize])
+
+def printDataSet(data):
+    for batch,label in data:
+        print("example: ", batch, ", Label: ",label)
