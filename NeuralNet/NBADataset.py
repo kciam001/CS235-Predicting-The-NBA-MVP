@@ -11,30 +11,29 @@ def ProcessCSV(file):
     for row in myreader:
         results.append(row)
     #the features are the first row of the csv file
-    features = np.array([s.lower() for s in results[0]])
+    features = [s.lower() for s in results[0]]
     data = np.array(results[1:])
     return features, data  
 
+def index(arr, value):
+    try:
+        return arr.index(value)
+    except ValueError:
+        return []
+
 class NBADataset(Dataset):
     def __init__(self, csvFile, featureNames): 
-        features, data = ProcessCSV(csvFile)
-        #get index for our label
-        idx = np.where(features == featureNames['label'])
-        idx2 = np.where(features == 'player')
+        features, rawData = ProcessCSV(csvFile)
+        #get indexes
+        labelIdx = index(features, featureNames['label']) 
+        playerIdx = index(features,'player') 
         #get corresponding column
-        self.awdShare = data[:,idx].astype(float)
+        self.awdShare = rawData[:,labelIdx].astype(float)
         #store playName information if possible
-        self.playerNames = data[:,idx2]
-
-        #create empty array to hold features we care about
-        self.data = np.zeros(shape=(self.awdShare.shape[0],1))
-        #extract feature columns
-        for name in featureNames['features']:
-            index = np.where(features == name)
-            if index[0].size > 0:
-                self.data = np.append(self.data, data[:,index].astype(float).reshape(-1,1), axis=1)
-        #delete 0 column
-        self.data = np.delete(self.data,0,axis=1)
+        self.playerNames = rawData[:,playerIdx]
+        #get indices for our features
+        indices = [features.index(ft) for ft in featureNames['features'] if ft in features]
+        self.data = rawData[:,indices].astype(float)
 
     def __len__(self):
         return len(self.data)
@@ -55,6 +54,6 @@ def SplitDataSet(dataset, split):
     trainSize = len(dataset) - testSize
     return random_split(dataset, [trainSize, testSize])
 
-def printDataSet(data):
+def PrintDataSet(data):
     for batch,label in data:
         print("example: ", batch, ", Label: ",label)

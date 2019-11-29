@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F 
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from DataSetCreator import NBADataset, SplitDataSet
+from NBADataset import NBADataset, SplitDataSet, PrintDataSet
 from matplotlib import pyplot as plt
 import argparse
 
@@ -42,7 +42,7 @@ def train(numFeatures, numEpochs, dataSet, validDataSet, path, showPlot, saveMod
     model = Net(numFeatures)
     checkpoint = 50
     #learning rate
-    learningRate = 0.001
+    learningRate = 0.01
     #optimzer + loss function
     optimizer = optim.SGD(model.parameters(), lr=learningRate)
     lossFunction = nn.MSELoss(reduction='sum')
@@ -94,7 +94,7 @@ def main():
     EPOCH = 5000
     BATCH_SIZE = 50
     #Validation split variable
-    VALIDATION_SPLIT = .2
+    VALIDATION_SPLIT = .1
 
     #parser
     parser = argparse.ArgumentParser(description='Train or evaluate a model')
@@ -129,9 +129,9 @@ def main():
         #split the data
         trainSet, validSet = SplitDataSet(trainDataset,VALIDATION_SPLIT)
         #create training Dataloader
-        trainDataLoader = DataLoader(trainSet, batch_size=BATCH_SIZE)
+        trainDataLoader = DataLoader(trainSet, batch_size=BATCH_SIZE,shuffle=True)
         #create the validation Dataloader
-        validDataLoader = DataLoader(validSet, batch_size=BATCH_SIZE)
+        validDataLoader = DataLoader(validSet, batch_size=BATCH_SIZE,shuffle=False)
         #create a model
         train(numFeatures, EPOCH, trainDataLoader, validDataLoader, WEIGHTS_PATH, args.plot, args.save)
 
