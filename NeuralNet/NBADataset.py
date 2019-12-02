@@ -1,9 +1,12 @@
 import csv
 import numpy as np
-import torch 
+import torch
+import math 
 from torch.utils.data import Dataset, random_split
+from torch.utils.data.sampler import SubsetRandomSampler
 
 def ProcessCSV(file):
+    print("Loaded data from {0}".format(file))
     results = []
     #open csv file
     datafile = open(file, 'r')
@@ -57,3 +60,10 @@ def SplitDataSet(dataset, split):
 def PrintDataSet(data):
     for batch,label in data:
         print("example: ", batch, ", Label: ",label)
+
+def KFoldCross(dataset,k, i):
+    size = len(dataset)
+    w = math.ceil(size/k)
+    testIdx = [i for i in range(i*w,(i+1)*w) if i < len(dataset)]
+    trainIdx = [i for i in range(len(dataset)) if i not in testIdx and i < len(dataset)]
+    return SubsetRandomSampler(trainIdx), SubsetRandomSampler(testIdx)
