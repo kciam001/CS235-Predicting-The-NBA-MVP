@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from NBADataset import NBADataset, SplitDataSet, PrintDataSet, KFoldCross
 from matplotlib import pyplot as plt
 import argparse
+import random
 
 class Net(nn.Module):
     def __init__(self, numFeatures):
@@ -21,12 +22,6 @@ class Net(nn.Module):
         input = self.activation(self.fc2(input))
         output = self.output(input)
         return output
-
-def loadModel(numFeatures,path):
-    model = Net(numFeatures)
-    model.load_state_dict(torch.load(path))
-    model.eval()
-    return model
 
 def train(model, dataLoader, optimizer, lossFunction):
     model.train()
@@ -47,25 +42,28 @@ def train(model, dataLoader, optimizer, lossFunction):
     epochLoss = runningLoss / len(dataLoader)
     return epochLoss
 
-def test(model, dataLoader):
+def test(model, dataLoader, lossFunction):
     model.eval()
     correct = 0
     total = 0
+    runningLoss = 0.0
     #validate the model on validationSet
     with torch.no_grad():
         for i, data in enumerate(dataLoader):
             batch,labels = data
             labels = labels.view(-1,1)
             output = model(batch)
+            loss = torch.sqrt(lossFunction(output, labels.float()))
             for index, val in enumerate(output):
                 if (abs(val - labels[index])) < .1:
                     correct +=1
                 total +=1 
+            runningLoss += loss.item()
     try:
         accuracy = float(correct)/total
-        return accuracy
+        return accuracy, runningLoss
     except ZeroDivisionError:
-        return 0
+        return 0, runningLoss
 
 def givePredictions(model, evalData):
     model.eval()
@@ -75,18 +73,26 @@ def givePredictions(model, evalData):
         output = model(batch)
         print("Player: {0} - {1:4f}".format(evalData.getPlayerName(i), output.item()))
     
+def generateFeatures(features):
+    random.seed()
+    numFeatures = random.randint(1,len(features))
+    sample = random.choices(features, k=numFeatures)
+    print("Random features chosen: {0}".format(sample))
+    return sample
 
 def main():
     #Training variables
-    EPOCH = 1500
+    EPOCH = 1000
     BATCH_SIZE = 50
     VALIDATION_SPLIT = .2
     LEARNING_RATE = .001
+    FULL_FEATURES = ['fga','fg3a','fta','mp_per_g','pts_per_g','trb_per_g','ast_per_g','stl_per_g','blk_per_g','fg_pct','fg3_pct','ft_pct','ws','ws_per_48','per','ts_pct','usg_pct','bpm']
+    REDUCED_FEATURES = ['mp_per_g', 'pts_per_g', 'trb_per_g', 'ast_per_g', 'stl_per_g', 'blk_per_g', 'fg_pct', 'fg3_pct', 'ft_pct', 'ws']
 
-    #parser
     parser = argparse.ArgumentParser(description='Train or evaluate a model')
     parser.add_argument('--train', action='store_true', help="training mode")
-    parser.add_argument('--eval', action='store_true', help="evaluation mode")
+    parser.add_argument('--test', action='store_true', help="evaluation mode")
+    parser.add_argument('-r','--random', action='store_true', help="use random subset of features for training")
     parser.add_argument('-p','--plot', action='store_true', help="plot metrics after training model")
     parser.add_argument('-s','--save', action='store_true', help="save the model weights after training")
     parser.add_argument('-k','--kfold', help="kfold validation")
@@ -96,7 +102,7 @@ def main():
 
     #features and label information
     dataInfo = {
-        'features':['mp_per_g', 'pts_per_g', 'trb_per_g', 'ast_per_g', 'stl_per_g', 'blk_per_g', 'fg_pct', 'fg3_pct', 'ft_pct', 'ws']
+        'features': (generateFeatures(FULL_FEATURES) if args.random else REDUCED_FEATURES)
         , 'label':'award_share'}
     numFeatures = len(dataInfo['features']) 
 
@@ -122,7 +128,7 @@ def main():
             #epoch loop
             for epcoh in range(1, EPOCH + 1):
                 epochLoss = train(model, trainDataLoader, optimizer, lossFunction)
-                accuracy = test(model,testDataLoader) 
+                accuracy,_ = test(model,testDataLoader) 
                 if accuracy > highest:
                     highest = accuracy
             print("for K = {0}, Accuracy: {1:5f}".format(k,highest))
@@ -142,11 +148,13 @@ def main():
 
         #epoch loop
         losses = []
+        vLosses = []
         accuracies = []
         for e in range(1, EPOCH + 1):
             epochLoss = train(model, trainDataLoader, optimizer, lossFunction)
-            accuracy = test(model,validDataLoader)
+            accuracy, vloss = test(model,validDataLoader, lossFunction)
             losses.append(epochLoss)
+            vLosses.append(vloss)
             accuracies.append(accuracy)
             if e%50 == 49:
                 print("Epoch {0}: Loss {1:4f}, Accuracy: {2:4f}".format(e+1,epochLoss,accuracy))
@@ -154,6 +162,7 @@ def main():
         if args.plot:
             fig, (ax1, ax2) = plt.subplots(1, 2)
             ax1.plot(np.array(losses), 'r')
+            ax1.plot(np.array(vLosses), 'b')
             ax1.set(xlabel='Epoch')
             ax1.set_title('Loss')
             ax2.plot(np.array(accuracies), 'g')   
@@ -165,7 +174,7 @@ def main():
             torch.save(model.state_dict(),weightsPath) 
 
     #eval the model
-    elif args.eval:
+    elif args.test:
         model = Net(numFeatures)
         model.load_state_dict(torch.load(weightsPath))
         model.eval()
