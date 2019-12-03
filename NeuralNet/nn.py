@@ -128,7 +128,7 @@ def main():
             #epoch loop
             for epcoh in range(1, EPOCH + 1):
                 epochLoss = train(model, trainDataLoader, optimizer, lossFunction)
-                accuracy,_ = test(model,testDataLoader) 
+                accuracy,_ = test(model,testDataLoader,lossFunction) 
                 if accuracy > highest:
                     highest = accuracy
             print("for K = {0}, Accuracy: {1:5f}".format(k,highest))
