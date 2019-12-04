@@ -12,19 +12,13 @@ def r2(dependent, results):
     ss_res = sum((dependent - results) ** 2)
     r2 = 1 - (ss_res / ss_tot)
     return r2
-
-def cost(stats, dependent, theta):
-	m = len(dependent)
-	J = np.sum((stats.dot(theta) - dependent) ** 2)/(2 * m)
-	return J
-
+    
 def lr(stats, dependent, theta, alpha, iterations):
 	m = len(dependent)
 	for iteration in range(iterations):
 		gradient = stats.T.dot(stats.dot(theta) - dependent)/m
 		theta = theta - alpha * gradient
 		c = cost(stats, dependent, theta)
-		cost_history[iteration] = c
 	return theta
 
 np.set_printoptions(formatter={'float': lambda x: "{0:0.4f}".format(x)})
