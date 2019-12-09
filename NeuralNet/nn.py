@@ -19,7 +19,7 @@ class Net(nn.Module):
 
     def forward(self, input):
         input = self.activation(self.fc1(input))
-        input = self.activation(self.fc2(input))
+        #input = self.activation(self.fc2(input))
         output = self.output(input)
         return output
 
@@ -81,7 +81,7 @@ def givePredictions(model, evalData):
 
 def main():
     #Training variables
-    EPOCH = 5000
+    EPOCH = 1000
     BATCH_SIZE = 50
     VALIDATION_SPLIT = .2
     LEARNING_RATE = .001
@@ -95,7 +95,7 @@ def main():
     parser.add_argument('-s','--save', action='store_true', help="save the model weights after training")
     parser.add_argument('-k','--kfold', help="kfold validation")
     parser.add_argument('-w','--weights', help="weights file to save/load")
-    parser.add_argument('-d', '--dataPath',required=True,help="name of csv file(minus .csv) that will be loaded. Must be located in ./Data folder")
+    parser.add_argument('-d', '--dataset',required=True,help="name of csv file(minus .csv) that will be loaded. Must be located in ./Data folder")
     args = parser.parse_args()
 
     #features and label information
@@ -108,35 +108,33 @@ def main():
     weightsPath = "../Weights/{0}.pth".format(args.weights) if args.weights is not None else '../Weights/NBA_net.pth'
 
     #dataset to be loaded    
-    dataPath = "../Data/" + args.dataPath + '.csv'
+    dataPath = "../Data/" + args.dataset + '.csv'
 
     #build the model
     model = Net(numFeatures)
+    #create model, optimizer, lossFunction
+    optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE)
+    lossFunction = nn.MSELoss(reduction='sum')
+    #training dataset
+    dataset = NBADataset(dataPath, dataInfo)
 
     #eval the model
     if args.test:
         model.load_state_dict(torch.load(weightsPath))
         model.eval()
         #load in the examples
-        evalData = NBADataset(dataPath, dataInfo)
+        evalData = NBADataset(dataset, dataInfo)
         givePredictions(model,evalData)
         return
-
-    #train the model
-    #create model, optimizer, lossFunction
-    optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE)
-    lossFunction = nn.MSELoss(reduction='sum')
-    #training dataset
-    trainDataset = NBADataset(dataPath, dataInfo)
 
     elif args.kfold:
         minErrors = []
         for k in range(int(args.kfold)):
             lowestRMSE = float('inf')
             #split the dataset based on k
-            trainSample, testSample = KFoldCross(trainDataset,int(args.kfold),k)     
-            trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE,sampler=trainSample)
-            testDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE,sampler=testSample)
+            trainSample, testSample = KFoldCross(dataset,int(args.kfold),k)     
+            trainDataLoader = DataLoader(dataset, batch_size=BATCH_SIZE,sampler=trainSample)
+            testDataLoader = DataLoader(dataset, batch_size=BATCH_SIZE,sampler=testSample)
             #epoch loop
             for epcoh in range(1, EPOCH + 1):
                 epochLoss = train(model, trainDataLoader, optimizer, lossFunction)
@@ -149,7 +147,7 @@ def main():
     
     #train the model
     elif args.train:
-        trainSet, validSet = SplitDataSet(trainDataset,VALIDATION_SPLIT)
+        trainSet, validSet = SplitDataSet(dataset,VALIDATION_SPLIT)
         trainDataLoader = DataLoader(trainSet, batch_size=BATCH_SIZE,shuffle=True)
         validDataLoader = DataLoader(validSet, batch_size=BATCH_SIZE,shuffle=False)
 
@@ -163,10 +161,11 @@ def main():
                 print("Epoch {0}: Loss {1:4f}".format(e+1,epochLoss))
 
         if args.plot:
-            fig, (ax1, ax2) = plt.subplots(1, 2)
+            fig, (ax1) = plt.subplots(1, 1)
             ax1.plot(np.array(losses), 'r')
             ax1.set(xlabel='Epoch')
-            ax1.set_title('Loss')
+            ax1.set(ylabel='Loss')
+            ax1.set_title('Training Loss')             
             plt.show()
 
         if args.save:
