@@ -18,8 +18,10 @@ class Net(nn.Module):
         self.activation = nn.Sigmoid()
 
     def forward(self, input):
+        #first hidden layer
         input = self.activation(self.fc1(input))
         #input = self.activation(self.fc2(input))
+        #output layer
         output = self.output(input)
         return output
 
