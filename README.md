@@ -3,6 +3,7 @@
 ## Installation
 ```sh
 $ git clone https://github.com/kciam001/CS235-Predicting-The-NBA-MVP
+$ cd CS235-Predicting-The-NBA-MVP/
 $ pip install -r requirements.txt
 ```
 
