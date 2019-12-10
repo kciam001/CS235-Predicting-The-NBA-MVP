@@ -123,8 +123,7 @@ def main():
         model.load_state_dict(torch.load(weightsPath))
         model.eval()
         #load in the examples
-        evalData = NBADataset(dataset, dataInfo)
-        givePredictions(model,evalData)
+        givePredictions(model,dataset)
         return
 
     elif args.kfold:
@@ -170,6 +169,7 @@ def main():
 
         if args.save:
             torch.save(model.state_dict(),weightsPath) 
+            print("saving weights")
 
 if __name__ == '__main__':
     main()

@@ -23,7 +23,7 @@ def knnRegression(trainList, testList):
         for trainPlayer in trainList:
             distance = 0
 
-            for testFeature, trainFeature in zip(testPlayer[1:-1], trainPlayer[1:-1]):
+            for testFeature, trainFeature in zip(testPlayer[1:], trainPlayer[1:-1]):
                 distance += (float(testFeature) - float(trainFeature))**2
             distance **= 0.5
             nearestNeighbors.append([trainPlayer, distance])
@@ -92,5 +92,10 @@ except ValueError:
         testList = list(testReader)
     averageAwardShares = knnRegression(trainList, testList)
 
+    scores = []
     for player, averageAwardShare in zip(testList, averageAwardShares):
-        print(player[0] + ' [award_share]: ' + str(averageAwardShare))
+        scores.append([player[0], averageAwardShare])
+    scores.sort(reverse = True, key = lambda x: x[1])
+
+    for player in scores:
+        print(player[0] + ' [award_share]: ' + str(player[1]))

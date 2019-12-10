@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, random_split
 from torch.utils.data.sampler import SubsetRandomSampler
 
 def ProcessCSV(file):
-    print("Loaded data from {0}".format(file))
+    #print("Loaded data from {0}".format(file))
     results = []
     #open csv file
     datafile = open(file, 'r')
