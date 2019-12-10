@@ -62,27 +62,27 @@ try:
         score = 0
 
         for k, averageAwardShare in zip(range(i, i + kFold), averageAwardShares):
-            if abs(float(trainList[k][-1]) - averageAwardShare) < 0.1:
-                score += 1
+            score += (float(trainList[k][-1]) - averageAwardShare)**2
 
+        score **= 0.5
         accuracy = score / len(averageAwardShares)
         accuracies += accuracy
 
-        print('Score for cross validation iteration ' + str(j) + ': ' + str(accuracy))
+        print('Error for cross validation iteration ' + str(j) + ': ' + str(accuracy))
     averageAccuracy = accuracies / j
-    print('Average accuracy of cross validation: ' + str(averageAccuracy))
+    print('Average error of cross validation: ' + str(averageAccuracy))
 except IndexError:
     score = 0
 
     for i in range(len(trainList)):
         averageAwardShare = knnRegression([trainList[j] for j in range(len(trainList)) if j != i], [trainList[i]])
         
-        if abs(float(trainList[i][-1]) - averageAwardShare[0]) < 0.1:
-            score += 1
+        score += (float(trainList[i][-1]) - averageAwardShare[0])**2
 
+    score **= 0.5
     accuracy = score / len(trainList)
 
-    print('Average accuracy of leave one out validation: ' + str(accuracy))
+    print('Average error of leave one out validation: ' + str(accuracy))
 except ValueError:
     testFileName = sys.argv[3]
     with open(testFileName, 'r') as testFile:
