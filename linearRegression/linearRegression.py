@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
+def cost(stats, dependent, theta):
+    m = len(dependent)
+    c = np.sum((stats.dot(theta) - dependent) ** 2)/(2 * m)
+    return c
+
 def rmse(actual, pred):
     rmse = np.sqrt(sum((actual - pred)**2)/len(actual))
     return rmse
