@@ -1,4 +1,4 @@
-# MnistClassifier
+# NBA MVP Predictor
 
 ## Installation
 ```sh
