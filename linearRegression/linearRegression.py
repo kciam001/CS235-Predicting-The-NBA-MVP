@@ -29,8 +29,6 @@ def lr(stats, dependent, theta, alpha, iterations):
 np.set_printoptions(formatter={'float': lambda x: "{0:0.4f}".format(x)})
 data = pd.read_csv('train_data.csv')
 testdata = pd.read_csv('final_test_data.csv')
-print(data.shape)
-print(testdata.shape)
 stats = data.ix[:,1:-1]
 award_share = data.ix[:,-1]
 
@@ -48,11 +46,13 @@ ty = testdata.ix[:,-1]
 players = testdata.ix[0:,0]
 
 pred = tdata.dot(newt)
-for i in range(10):
-	print(players[i] + ": " + str(round(pred[i],4)))
+
+players = pd.concat([players, pd.DataFrame(pred)], axis=1)
+players = players.sort_values(by = 0, ascending=False)
+players.columns = ['Player', 'Award Share']
+print(players.head(5))
 
 results = statsdata.dot(newt)
 error = rmse(award_share, results)
 r2_error = r2(award_share, results)
-print(str(round(error, 4)))
-print(str(round(r2_error, 4)))
+print("RMSE: " + str(round(error, 4)))
